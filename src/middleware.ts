@@ -1,44 +1,61 @@
-import { type NextRequest } from 'next/server'
-import { updateSession } from '@/lib/supabase/middleware'
+import { createServerClient } from '@supabase/ssr'
+import { NextResponse, type NextRequest } from 'next/server'
 
 export const runtime = 'experimental-edge';
 
 export async function middleware(request: NextRequest) {
-  // Update the session and get the base response
-  const response = await updateSession(request);
-  
-  // Get user from the refreshed session
-  // Note: we can't easily get the user role in middleware without an extra DB query
-  // For now, we just check for a valid session. Role-based checks happen in the Layouts.
-  const hasSession = request.cookies.get('sb-access-token') || request.cookies.get('sb-refresh-token');
-  
-  const isStudioRoute = request.nextUrl.pathname.startsWith("/studio");
-  const isLoginRoute = request.nextUrl.pathname === "/login";
+  let response = NextResponse.next({
+    request: { headers: request.headers },
+  })
 
-  if (isStudioRoute && !hasSession) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return Response.redirect(url);
+  // Create Supabase client that reads/writes cookies on the request/response
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name) {
+          return request.cookies.get(name)?.value
+        },
+        set(name, value, options) {
+          request.cookies.set({ name, value, ...options })
+          response = NextResponse.next({ request: { headers: request.headers } })
+          response.cookies.set({ name, value, ...options })
+        },
+        remove(name, options) {
+          request.cookies.set({ name, value: '', ...options })
+          response = NextResponse.next({ request: { headers: request.headers } })
+          response.cookies.set({ name, value: '', ...options })
+        },
+      },
+    }
+  )
+
+  // This refreshes the session and is the canonical way to check auth in middleware
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const isStudioRoute = request.nextUrl.pathname.startsWith('/studio')
+  const isLoginRoute = request.nextUrl.pathname === '/login'
+
+  // Redirect unauthenticated users away from studio
+  if (isStudioRoute && !user) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    return NextResponse.redirect(url)
   }
 
-  if (isLoginRoute && hasSession) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/studio";
-    return Response.redirect(url);
+  // Redirect authenticated users away from login page
+  if (isLoginRoute && user) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/studio'
+    return NextResponse.redirect(url)
   }
 
-  return response;
+  return response
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * Feel free to modify this pattern to include more paths.
-     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
