@@ -1,9 +1,20 @@
-"use client";
+import { Plus } from "lucide-react";
+import ArticlesTable from "@/components/studio/ArticlesTable";
+import { createClient } from "@/lib/supabase/server";
 
-import { MOCK_ARTICLES } from "@/lib/data";
-import { Plus, Search, Filter, MoreVertical } from "lucide-react";
+export default async function StudioArticlesPage() {
+  const supabase = await createClient();
+  
+  const { data: posts, error } = await supabase
+    .from('posts')
+    .select(`
+      *,
+      profiles (
+        name
+      )
+    `)
+    .order('created_at', { ascending: false });
 
-export default function StudioArticlesPage() {
   return (
     <div className="p-12">
       <header className="flex justify-between items-end mb-12">
@@ -21,69 +32,13 @@ export default function StudioArticlesPage() {
         </button>
       </header>
 
-      {/* Filters/Search Bar */}
-      <div className="flex space-x-4 mb-8">
-        <div className="flex-1 relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-black/30" size={18} />
-          <input 
-            type="text" 
-            placeholder="SEARCH ARTICLES..." 
-            className="w-full neo-border-sm pl-12 pr-4 py-3 text-xs font-black uppercase tracking-widest outline-none focus:ring-2 focus:ring-brand-red"
-          />
+      {error ? (
+        <div className="p-8 neo-border bg-brand-red/10 text-brand-red text-xs font-black uppercase tracking-widest">
+           Error fetching chronicles: {error.message}
         </div>
-        <button className="neo-border-sm px-6 py-3 flex items-center space-x-2 text-xs font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all">
-          <Filter size={16} />
-          <span>Filters</span>
-        </button>
-      </div>
-
-      {/* Articles Table */}
-      <div className="neo-border bg-white overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="border-b-2 border-black bg-black/5">
-              <th className="p-6 text-[10px] font-black uppercase tracking-widest">Title</th>
-              <th className="p-6 text-[10px] font-black uppercase tracking-widest">Category</th>
-              <th className="p-6 text-[10px] font-black uppercase tracking-widest">Author</th>
-              <th className="p-6 text-[10px] font-black uppercase tracking-widest">Status</th>
-              <th className="p-6 text-[10px] font-black uppercase tracking-widest text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {MOCK_ARTICLES.map((article) => (
-              <tr key={article.id} className="border-b border-black/10 hover:bg-black/[0.02] transition-colors group">
-                <td className="p-6">
-                  <span className="font-serif font-bold uppercase italic group-hover:text-brand-red transition-colors">
-                    {article.title}
-                  </span>
-                  <div className="text-[10px] font-black text-black/30 tracking-widest mt-1 uppercase">
-                    ID: {article.id} • {article.readTime}
-                  </div>
-                </td>
-                <td className="p-6">
-                  <span className="bg-black/5 text-black px-3 py-1 text-[10px] font-black uppercase tracking-widest neo-border-sm">
-                    {article.category}
-                  </span>
-                </td>
-                <td className="p-6 text-xs font-black uppercase tracking-widest text-black/60">
-                  {article.author}
-                </td>
-                <td className="p-6">
-                  <span className="flex items-center space-x-2">
-                    <div className="w-2 h-2 rounded-full bg-brand-green" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-brand-green">Published</span>
-                  </span>
-                </td>
-                <td className="p-6 text-right">
-                  <button className="p-2 hover:bg-black hover:text-white transition-all neo-border-sm">
-                    <MoreVertical size={16} />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      ) : (
+        <ArticlesTable initialPosts={posts || []} />
+      )}
     </div>
   );
 }
