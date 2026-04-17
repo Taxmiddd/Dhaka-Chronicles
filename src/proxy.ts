@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+export const runtime = 'edge';
+
 export function proxy(request: NextRequest) {
   const session = request.cookies.get("dc_session");
   const isStudioRoute = request.nextUrl.pathname.startsWith("/studio");
