@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #ffffff;
+  --color-foreground: #000000;
+  
+  --color-brand-red: #ee2a44;
+  --color-brand-green: #0f6b4f;
+  
+  --font-serif: var(--font-playfair);
+  --font-sans: var(--font-inter);
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #000000;
+  --brand-red: #ee2a44;
+  --brand-green: #0f6b4f;
+}
+
+body {
+  background-color: white;
+  color: black;
+  font-family: var(--font-sans);
+}
+
+/* Neo-Brutalism Utilities */
+.neo-border {
+  border: 1px solid #000000;
+}
+
+.neo-shadow {
+  box-shadow: 4px 4px 0px 0px #000000;
+}
+
+.neo-shadow-red {
+  box-shadow: 4px 4px 0px 0px #ee2a44;
+}
+
+.active-hover:hover {
+  border-color: #ee2a44 !important;
+}
