@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { LayoutDashboard, FileText, Settings, LogOut, BarChart3 } from "lucide-react";
 import { logoutAdmin } from "@/lib/actions/auth";
 
-export const runtime = 'edge';
 
 export default function StudioLayout({
   children,

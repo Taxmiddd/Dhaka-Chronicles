@@ -4,19 +4,24 @@ import type { NextRequest } from "next/server";
 export const runtime = 'experimental-edge';
 
 export function middleware(request: NextRequest) {
-  const session = request.cookies.get("dc_session");
-  const isStudioRoute = request.nextUrl.pathname.startsWith("/studio");
+  try {
+    const session = request.cookies.get("dc_session");
+    const isStudioRoute = request.nextUrl.pathname.startsWith("/studio");
 
-  if (isStudioRoute && !session) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    if (isStudioRoute && !session) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+
+    // If already logged in and try to visit login page, go to studio
+    if (request.nextUrl.pathname === "/login" && session) {
+      return NextResponse.redirect(new URL("/studio", request.url));
+    }
+
+    return NextResponse.next();
+  } catch (error) {
+    console.error('Middleware execution error:', error);
+    return NextResponse.next();
   }
-
-  // If already logged in and try to visit login page, go to studio
-  if (request.nextUrl.pathname === "/login" && session) {
-    return NextResponse.redirect(new URL("/studio", request.url));
-  }
-
-  return NextResponse.next();
 }
 
 export const config = {
