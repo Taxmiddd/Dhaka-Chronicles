@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 
 export const runtime = 'edge';
 
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const session = request.cookies.get("dc_session");
   const isStudioRoute = request.nextUrl.pathname.startsWith("/studio");
 
